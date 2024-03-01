@@ -30,23 +30,28 @@ def calculate_label_ratio(data):
     return real_ratio, fake_ratio, real_count
 
 def extract_audio_by_video(video_path, video_name, save_root):
-    # Specify the output path for the .wav file
-    audio_output_path = video_name.split('.')[0] + '.wav'
-    audio_output_path = os.path.join(save_root, audio_output_path)
+    try:
+        # Specify the output path for the .wav file
+        audio_output_path = video_name.split('.')[0] + '.wav'
+        audio_output_path = os.path.join(save_root, audio_output_path)
 
-    # Load the video file
-    video = VideoFileClip(video_path)
+        # Load the video file
+        video = VideoFileClip(video_path)
 
-    # Extract the audio from the video
-    audio = video.audio
+        # Extract the audio from the video
+        audio = video.audio
 
-    # Save the audio as a .wav file
-    audio.write_audiofile(audio_output_path, verbose=False, logger=None)
+        # Save the audio as a .wav file
+        audio.write_audiofile(audio_output_path, verbose=False, logger=None)
 
-    # Close the video file to release resources
-    video.close()
+        # Close the video file to release resources
+        video.close()
 
-    return audio_output_path
+        return audio_output_path
+
+    except Exception as e:
+        print(f"Error extracting audio: {e}, file name: {video_name}")
+        return "no_audio"
 
 
 def move_file(src_file_path, des_dir_path, sub_folder="train"):
@@ -83,6 +88,8 @@ if __name__ == "__main__":
             audio_output_path = extract_audio_by_video(video_path=video_path,
                                                        video_name=video_name,
                                                        save_root=video_folder)
+            if audio_output_path == "no_audio":
+                continue
             sub_folder_name = None
             if json_data[video_name]["label"] == "REAL":
                 sub_folder_name = "real"
