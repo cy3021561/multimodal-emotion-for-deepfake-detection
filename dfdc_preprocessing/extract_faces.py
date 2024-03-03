@@ -15,10 +15,10 @@ save_frames = 15
 input_fps = 30
 
 save_length = 3.6 #seconds
-save_avi = False
+save_avi = True
 
 failed_videos = []
-root = '../datasets/raw_dataset/for_multi/small_test'
+root = '../datasets/raw_dataset/split_dataset'
 
 select_distributed = lambda m, n: [i*n//m + n//(2*m) for i in range(m)]
 n_processed = 0

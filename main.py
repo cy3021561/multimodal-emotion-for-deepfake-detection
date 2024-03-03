@@ -128,11 +128,11 @@ if __name__ == '__main__':
                     'optimizer': optimizer.state_dict(),
                     'best_prec1': best_prec1
                     }
-                save_checkpoint(state, False, opt, fold)
+                save_checkpoint(state, True, opt, fold)
             
             if not opt.no_val:
                 
-                validation_loss, prec1 = val_epoch(i, val_loader, model, criterion, opt,
+                validation_loss, prec1, final_auroc = val_epoch(i, val_loader, model, criterion, opt,
                                             val_logger)
                 is_best = prec1 > best_prec1
                 best_prec1 = max(prec1, best_prec1)
@@ -141,7 +141,8 @@ if __name__ == '__main__':
                 'arch': opt.arch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'best_prec1': best_prec1
+                'best_prec1': best_prec1,
+                'auroc': final_auroc,
                 }
                
                 save_checkpoint(state, is_best, opt, fold)
@@ -168,7 +169,7 @@ if __name__ == '__main__':
                 num_workers=opt.n_threads,
                 pin_memory=True)
             
-            test_loss, test_prec1 = val_epoch(10000, test_loader, model, criterion, opt,
+            test_loss, test_prec1, final_auroc = val_epoch(10000, test_loader, model, criterion, opt,
                                             test_logger)
             
             with open(os.path.join(opt.result_path, 'test_set_bestval'+str(fold)+'.txt'), 'a') as f:

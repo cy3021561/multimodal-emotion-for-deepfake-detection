@@ -2,13 +2,16 @@
 This code is based on https://github.com/okankop/Efficient-3DCNNs
 '''
 import torch
+from matplotlib import pyplot as plt
 from torch.autograd import Variable
 import time
 from utils import AverageMeter, calculate_accuracy
+from torchmetrics.classification import BinaryAUROC
+
 
 def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger,modality='both',dist=None ):
-    #for evaluation with single modality, specify which modality to keep and which distortion to apply for the other modaltiy:
-    #'noise', 'addnoise' or 'zeros'. for paper procedure, with 'softhard' mask use 'zeros' for evaluation, with 'noise' use 'noise'
+    # for evaluation with single modality, specify which modality to keep and which distortion to apply for the other modaltiy:
+    # 'noise', 'addnoise' or 'zeros'. for paper procedure, with 'softhard' mask use 'zeros' for evaluation, with 'noise' use 'noise'
     print('validation at epoch {}'.format(epoch))
     assert modality in ['both', 'audio', 'video']    
     model.eval()
@@ -18,6 +21,9 @@ def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger,modal
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
+    # Initialize the AUROC metric
+    auroc = BinaryAUROC()
+    auc_values = []
 
     end_time = time.time()
     for i, (inputs_audio, inputs_visual, targets) in enumerate(data_loader):
@@ -48,10 +54,7 @@ def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger,modal
                 inputs_audio = torch.zeros(inputs_audio.size())
         inputs_visual = inputs_visual.permute(0,2,1,3,4)
         inputs_visual = inputs_visual.reshape(inputs_visual.shape[0]*inputs_visual.shape[1], inputs_visual.shape[2], inputs_visual.shape[3], inputs_visual.shape[4])
-        
 
-
-        
         targets = targets.to(opt.device)
         with torch.no_grad():
             inputs_visual = Variable(inputs_visual)
@@ -59,6 +62,14 @@ def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger,modal
             targets = Variable(targets)
         outputs = model(inputs_audio, inputs_visual)
         loss = criterion(outputs, targets)
+
+        # Use sigmoid to get probabilities
+        probs = torch.sigmoid(outputs)
+
+        # Update AUROC metric
+        auroc.update(probs[:, 1], targets.int())
+        auc_values.append(auroc(probs[:, 1], targets.int()))
+
         prec1, prec5 = calculate_accuracy(outputs.data, targets.data, topk=(1,5))
         top1.update(prec1, inputs_audio.size(0))
         top5.update(prec5, inputs_audio.size(0))
@@ -83,12 +94,23 @@ def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger,modal
                   top1=top1,
                   top5=top5))
 
+    # Compute the final AUROC value
+    final_auroc = auroc.compute()
+    print(f'Final AUROC: {final_auroc:.4f}')
+    fig_, ax_ = auroc.plot(auc_values)
+    fig_.savefig('test_auc_result.png')
+
+    # Reset AUROC for future validation calls
+    auroc.reset()
+
     logger.log({'epoch': epoch,
                 'loss': losses.avg.item(),
                 'prec1': top1.avg.item(),
-                'prec5': top5.avg.item()})
+                'prec5': top5.avg.item(),
+                'auroc': final_auroc.item()})
 
-    return losses.avg.item(), top1.avg.item()
+    return losses.avg.item(), top1.avg.item(), final_auroc.item()
+
 
 def val_epoch(epoch, data_loader, model, criterion, opt, logger, modality='both', dist=None):
     print('validation at epoch {}'.format(epoch))
