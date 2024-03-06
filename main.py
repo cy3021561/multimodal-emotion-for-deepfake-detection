@@ -25,7 +25,10 @@ if __name__ == '__main__':
     opt = parse_opts()
     n_folds = 1
     test_accuracies = []
-    
+
+    # Enable PyTorch's memory management features
+    os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
     if opt.device != 'cpu':
         opt.device = 'cuda' if torch.cuda.is_available() else 'cpu'  
 
@@ -100,9 +103,9 @@ if __name__ == '__main__':
                 pin_memory=True)
         
             val_logger = Logger(
-                    os.path.join(opt.result_path, 'val'+str(fold)+'.log'), ['epoch', 'loss', 'prec1', 'prec5'])
+                    os.path.join(opt.result_path, 'val'+str(fold)+'.log'), ['epoch', 'loss', 'prec1', 'prec5', 'auroc'])
             test_logger = Logger(
-                    os.path.join(opt.result_path, 'test'+str(fold)+'.log'), ['epoch', 'loss', 'prec1', 'prec5'])
+                    os.path.join(opt.result_path, 'test'+str(fold)+'.log'), ['epoch', 'loss', 'prec1', 'prec5', 'auroc'])
 
             
         best_prec1 = 0
@@ -128,12 +131,11 @@ if __name__ == '__main__':
                     'optimizer': optimizer.state_dict(),
                     'best_prec1': best_prec1
                     }
-                save_checkpoint(state, True, opt, fold)
-            
+                # save_checkpoint(state, True, opt, fold)
+
             if not opt.no_val:
                 
-                validation_loss, prec1, final_auroc = val_epoch(i, val_loader, model, criterion, opt,
-                                            val_logger)
+                validation_loss, prec1, final_auroc = val_epoch(i, val_loader, model, criterion, opt, val_logger)
                 is_best = prec1 > best_prec1
                 best_prec1 = max(prec1, best_prec1)
                 state = {
@@ -151,7 +153,7 @@ if __name__ == '__main__':
         if opt.test:
 
             test_logger = Logger(
-                    os.path.join(opt.result_path, 'test'+str(fold)+'.log'), ['epoch', 'loss', 'prec1', 'prec5'])
+                    os.path.join(opt.result_path, 'test'+str(fold)+'.log'), ['epoch', 'loss', 'prec1', 'prec5', 'auroc'])
 
             video_transform = transforms.Compose([
                 transforms.ToTensor(opt.video_norm_value)])

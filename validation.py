@@ -9,7 +9,7 @@ from utils import AverageMeter, calculate_accuracy
 from torchmetrics.classification import BinaryAUROC
 
 
-def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger,modality='both',dist=None ):
+def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger, modality='both', dist=None):
     # for evaluation with single modality, specify which modality to keep and which distortion to apply for the other modaltiy:
     # 'noise', 'addnoise' or 'zeros'. for paper procedure, with 'softhard' mask use 'zeros' for evaluation, with 'noise' use 'noise'
     print('validation at epoch {}'.format(epoch))
@@ -21,9 +21,9 @@ def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger,modal
     losses = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
+
     # Initialize the AUROC metric
     auroc = BinaryAUROC()
-    auc_values = []
 
     end_time = time.time()
     for i, (inputs_audio, inputs_visual, targets) in enumerate(data_loader):
@@ -60,15 +60,14 @@ def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger,modal
             inputs_visual = Variable(inputs_visual)
             inputs_audio = Variable(inputs_audio)
             targets = Variable(targets)
-        outputs = model(inputs_audio, inputs_visual)
-        loss = criterion(outputs, targets)
+            outputs = model(inputs_audio, inputs_visual)
+            loss = criterion(outputs, targets)
 
         # Use sigmoid to get probabilities
         probs = torch.sigmoid(outputs)
 
         # Update AUROC metric
         auroc.update(probs[:, 1], targets.int())
-        auc_values.append(auroc(probs[:, 1], targets.int()))
 
         prec1, prec5 = calculate_accuracy(outputs.data, targets.data, topk=(1,5))
         top1.update(prec1, inputs_audio.size(0))
@@ -79,26 +78,25 @@ def val_epoch_multimodal(epoch, data_loader, model, criterion, opt, logger,modal
         batch_time.update(time.time() - end_time)
         end_time = time.time()
 
-        print('Epoch: [{0}][{1}/{2}]\t'
-              'Time {batch_time.val:.5f} ({batch_time.avg:.5f})\t'
-              'Data {data_time.val:.5f} ({data_time.avg:.5f})\t'
-              'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-              'Prec@1 {top1.val:.5f} ({top1.avg:.5f})\t'
-              'Prec@5 {top5.val:.5f} ({top5.avg:.5f})'.format(
-                  epoch,
-                  i + 1,
-                  len(data_loader),
-                  batch_time=batch_time,
-                  data_time=data_time,
-                  loss=losses,
-                  top1=top1,
-                  top5=top5))
+        if i % 10 == 0:
+            print('Epoch: [{0}][{1}/{2}]\t'
+                  'Time {batch_time.val:.5f} ({batch_time.avg:.5f})\t'
+                  'Data {data_time.val:.5f} ({data_time.avg:.5f})\t'
+                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                  'Prec@1 {top1.val:.5f} ({top1.avg:.5f})\t'
+                  'Prec@5 {top5.val:.5f} ({top5.avg:.5f})'.format(
+                      epoch,
+                      i + 1,
+                      len(data_loader),
+                      batch_time=batch_time,
+                      data_time=data_time,
+                      loss=losses,
+                      top1=top1,
+                      top5=top5))
 
     # Compute the final AUROC value
     final_auroc = auroc.compute()
     print(f'Final AUROC: {final_auroc:.4f}')
-    fig_, ax_ = auroc.plot(auc_values)
-    fig_.savefig('test_auc_result.png')
 
     # Reset AUROC for future validation calls
     auroc.reset()

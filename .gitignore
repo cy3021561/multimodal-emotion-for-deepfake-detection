@@ -1,3 +1,6 @@
 /datasets/raw_dataset/
 /EfficientFace_Trained_on_AffectNet7.pth.tar
 /results/
+/datasets/
+/.idea
+/raw_dataset
