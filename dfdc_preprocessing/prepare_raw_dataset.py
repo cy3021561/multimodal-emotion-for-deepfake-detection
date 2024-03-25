@@ -3,7 +3,7 @@ from moviepy.editor import *
 from tqdm import tqdm
 import json
 
-from dfdc_preprocessing.face_track import collect_mp4_paths_and_names, read_json_file
+from face_track import collect_mp4_paths_and_names, read_json_file
 
 
 # Function to calculate label ratio
@@ -78,7 +78,7 @@ def move_file(src_file_path, des_dir_path, sub_folder="train"):
 
 if __name__ == "__main__":
     des_dir_path = "../datasets/raw_dataset/raw_video_audio_pairs/"
-    video_folder = "../datasets/raw_dataset/raw_videos/"
+    video_folder = "../datasets/raw_videos/"
     candidates = collect_mp4_paths_and_names(video_folder)
     meta_json_name = "final_metadata.json"
     json_data = read_json_file(os.path.join(video_folder, meta_json_name))

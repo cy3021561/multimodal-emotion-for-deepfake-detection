@@ -110,9 +110,11 @@ def face_detect(video_paths, video_dict, root_dict, input_metadata_filename, fin
 
 
 if __name__ == "__main__":
-    root_dir = "../dataset/test_videos/"
-    sub_folders = ["dfdc_train_part_0/", "dfdc_train_part_1/", "dfdc_train_part_2/", "dfdc_train_part_3/", "dfdc_train_part_4/", "dfdc_train_part_5/",
-                   "dfdc_train_part_6/", "dfdc_train_part_7/", "dfdc_train_part_8/", "dfdc_train_part_9/", "dfdc_train_part_10/"]
+    root_dir = "../datasets/test_videos/"
+    sub_folders = ["dfdc_train_part_11/", "dfdc_train_part_12/", "dfdc_train_part_13/", "dfdc_train_part_14/", "dfdc_train_part_15/", "dfdc_train_part_16/",
+                   "dfdc_train_part_17/", "dfdc_train_part_18/", "dfdc_train_part_19/", "dfdc_train_part_20/", "dfdc_train_part_21/", "dfdc_train_part_22/",
+                   "dfdc_train_part_23/", "dfdc_train_part_24/", "dfdc_train_part_25/", "dfdc_train_part_26/", "dfdc_train_part_27/", "dfdc_train_part_28/",
+                   "dfdc_train_part_29/", "dfdc_train_part_30/"]
     input_json = "metadata.json"
     final_json = "final_metadata.json"
     for sub in sub_folders:
